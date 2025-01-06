@@ -10,11 +10,11 @@ import pathlib
 
 import pandas as pd
 
-# In[2]:
+# In[ ]:
 
 
 # path the the platemaps
-path_to_plate_map = pathlib.Path("../../../data/raw/platemaps/").resolve()
+path_to_plate_map = pathlib.Path("../../../data/processed/platemaps/").resolve()
 path_to_plate_map.mkdir(parents=True, exist_ok=True)
 path_to_plate_map = path_to_plate_map / "wave1_plate_map.csv"
 
