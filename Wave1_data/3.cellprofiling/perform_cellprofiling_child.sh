@@ -1,24 +1,26 @@
 #!/bin/bash
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=50
+#SBATCH --nodes=1
+#SBATCH --ntasks=2
 #SBATCH --partition=amilan
 #SBATCH --qos=normal
 #SBATCH --account=amc-general
-#SBATCH --time=8:00:00
-#SBATCH --output=../cp-%j.out
+#SBATCH --time=20:00
+#SBATCH --output=cp_child-%j.out
 
-# 50 cores at 3.75 GB of ram per core puts us under the max ram for this node :D
+# 2 cores at 3.75 GB of ram per core
 
 # activate cellprofiler environment
 module load anaconda
 conda init bash
 conda activate cellprofiler_timelapse_env
 
+dir=$1
+
 jupyter nbconvert --to=script --FilesWriter.build_directory=scripts/ notebooks/*.ipynb
 
 cd scripts/ || exit
 
-python run_cellprofiler_analysis.py
+python run_cellprofiler_analysis.py --input_dir "$dir"
 
 cd .. || exit
 
