@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "timelapse_utils"
+version = "0.0.1"
+description = "Utility modules for the timelapse data processing and analysis"
+requires-python = ">=3.9"
+authors = [{ name = "Michael J. Lippincott" }]
+license = { text = "BSD 3-Clause License" }
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "scikit-image",
+    "tifffile",
+    "cellpose",
+    "argparse",
+    "tqdm",
+    "jupyter",
+    "ipykernel"
+]
+[tool.uv]
+# Fall back to PyPI for other packages
+extra-index-url = ["https://pypi.org/simple"]
+
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "ruff", "pre-commit", "ipykernel"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+	"file_utils*",
+]
+
