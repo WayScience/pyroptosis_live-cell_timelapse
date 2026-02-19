@@ -62,8 +62,6 @@ def bandicoot_check(
         The base directory for image data.
     """
     if bandicoot_mount_path.exists():
-        # comment out depending on whose computer you are on
-        # mike's computer
         image_base_dir = pathlib.Path(os.path.expanduser("~/mnt/bandicoot/")).resolve(
             strict=True
         )

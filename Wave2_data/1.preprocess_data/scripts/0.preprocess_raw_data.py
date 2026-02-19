@@ -127,7 +127,7 @@ for index, row in tqdm.tqdm(df.iterrows(), total=df.shape[0]):
 
 # ## File count validations
 
-# In[7]:
+# In[ ]:
 
 
 # check that there are
@@ -135,9 +135,8 @@ for index, row in tqdm.tqdm(df.iterrows(), total=df.shape[0]):
 fovs = 4
 channels = 5
 wells = 56
-time_interval_hours = 0.25
-time_elapsed_hours = 20
-expected_time_points = int(time_elapsed_hours / time_interval_hours) + 1
+time_points = 102  # every ~11 minutes
+expected_time_points = int(time_points)
 images_per_well_fov = channels * expected_time_points
 images_per_plate = fovs * channels * wells * expected_time_points
 
@@ -171,13 +170,13 @@ plate_df["Channel"] = (
 )
 
 
-# In[9]:
+# In[ ]:
 
 
 well_channel_grouped = (
     plate_df.groupby(["well_fov", "Channel"]).size().reset_index(name="num_files")
 )
-# find cases where num_files is not equal to 103 (number of time points)
+# find cases where num_files is not equal to 102 (number of time points)
 expected_time_points = 102
 if (
     len(well_channel_grouped[well_channel_grouped["num_files"] != expected_time_points])
