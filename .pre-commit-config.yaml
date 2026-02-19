@@ -1,6 +1,6 @@
 repos:
 -   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
-    rev: v0.6.1       # Insert the latest tag here
+    rev: v0.9.0       # Insert the latest tag here
     hooks:
     -   id: pre-commit-update
         args: [--exclude, black, --keep, isort]
@@ -30,13 +30,13 @@ repos:
 
   # remove unused imports
 -   repo: https://github.com/hadialqattan/pycln.git
-    rev: v2.5.0
+    rev: v2.6.0
     hooks:
     -   id: pycln
 
   # additional hooks found with in the pre-commit lib
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
     -   id: trailing-whitespace # removes trailing white spaces
     -   id: mixed-line-ending # removes mixed end of line
