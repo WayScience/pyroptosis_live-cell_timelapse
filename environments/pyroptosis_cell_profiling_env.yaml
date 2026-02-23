@@ -16,18 +16,8 @@ dependencies:
 - conda-forge::matplotlib
 - conda-forge::seaborn
 - conda-forge::pandas
-# # this package must be hardcoded to work with Mac
-# - conda-forge::mysqlclient
 - conda-forge::openjdk
-# # must specifiy scikit-image to avoid error in MeasureGranularity
-# - conda-forge::scikit-image
-# - conda-forge::scikit-learn
-# - conda-forge::mahotas
-# - conda-forge::gtk2
-# - conda-forge::typing-extensions
-# # these are strict because that is how it is on the CellProfiler wiki (Jinja updated for nbconvert)
-# # - conda-forge::Jinja2=3.0.3
-# - conda-forge::inflect
+
 # Update to 4.2.0 to avoid libatk error
 - conda-forge::wxpython=4.2.0
 # - conda-forge::sentry-sdk=0.18.0
