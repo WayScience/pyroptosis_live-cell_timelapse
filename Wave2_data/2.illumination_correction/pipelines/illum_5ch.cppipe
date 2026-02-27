@@ -42,44 +42,44 @@ NamesAndTypes:[module_num:3|svn_version:'Unknown'|variable_revision_number:8|sho
     Relative pixel spacing in Y:1.0
     Relative pixel spacing in Z:1.0
     Select the rule criteria:and (metadata does Channel "1")
-    Name to assign these images:C1
+    Name to assign these images:ChromaLive_640
     Name to assign these objects:Cell
     Select the image type:Grayscale image
     Set intensity range from:Image metadata
     Maximum intensity:255.0
     Select the rule criteria:and (metadata does Channel "2")
-    Name to assign these images:C2
+    Name to assign these images:ChromaLive_488
     Name to assign these objects:Cell
     Select the image type:Grayscale image
     Set intensity range from:Image metadata
     Maximum intensity:255.0
     Select the rule criteria:and (metadata does Channel "3")
-    Name to assign these images:C3
+    Name to assign these images:SYTOX_Green
     Name to assign these objects:Cell
     Select the image type:Grayscale image
     Set intensity range from:Image metadata
     Maximum intensity:255.0
     Select the rule criteria:and (metadata does Channel "4")
-    Name to assign these images:C4
+    Name to assign these images:NucleoLive
     Name to assign these objects:Cell
     Select the image type:Grayscale image
     Set intensity range from:Image metadata
     Maximum intensity:255.0
     Select the rule criteria:and (metadata does Channel "5")
-    Name to assign these images:C5
+    Name to assign these images:Brightfield
     Name to assign these objects:Cell
     Select the image type:Grayscale image
     Set intensity range from:Image metadata
     Maximum intensity:255.0
 
 Groups:[module_num:4|svn_version:'Unknown'|variable_revision_number:2|show_window:False|notes:['']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Do you want to group your images?:Yes
+    Do you want to group your images?:No
     grouping metadata count:1
     Metadata category:Well
 
 CorrectIlluminationCalculate:[module_num:5|svn_version:'Unknown'|variable_revision_number:2|show_window:False|notes:['']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Select the input image:C1
-    Name the output image:IllumC1
+    Select the input image:ChromaLive_640
+    Name the output image:IllumCL640
     Select how the illumination function is calculated:Background
     Dilate objects in the final averaged image?:No
     Dilation radius:1
@@ -103,12 +103,12 @@ CorrectIlluminationCalculate:[module_num:5|svn_version:'Unknown'|variable_revisi
     Residual value for convergence:0.001
 
 CorrectIlluminationCalculate:[module_num:6|svn_version:'Unknown'|variable_revision_number:2|show_window:False|notes:['']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Select the input image:C2
-    Name the output image:IllumC2
+    Select the input image:ChromaLive_488
+    Name the output image:IllumCL488
     Select how the illumination function is calculated:Background
     Dilate objects in the final averaged image?:No
     Dilation radius:1
-    Block size:15
+    Block size:30
     Rescale the illumination function?:No
     Calculate function for each image individually, or based on all images?:Each
     Smoothing method:Fit Polynomial
@@ -128,8 +128,8 @@ CorrectIlluminationCalculate:[module_num:6|svn_version:'Unknown'|variable_revisi
     Residual value for convergence:0.001
 
 CorrectIlluminationCalculate:[module_num:7|svn_version:'Unknown'|variable_revision_number:2|show_window:False|notes:[]|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Select the input image:C3
-    Name the output image:IllumC3
+    Select the input image:SYTOX_Green
+    Name the output image:IllumSytoxG
     Select how the illumination function is calculated:Background
     Dilate objects in the final averaged image?:No
     Dilation radius:1
@@ -153,8 +153,8 @@ CorrectIlluminationCalculate:[module_num:7|svn_version:'Unknown'|variable_revisi
     Residual value for convergence:0.001
 
 CorrectIlluminationCalculate:[module_num:8|svn_version:'Unknown'|variable_revision_number:2|show_window:False|notes:[]|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Select the input image:C4
-    Name the output image:IllumC4
+    Select the input image:NucleoLive
+    Name the output image:IllumNL
     Select how the illumination function is calculated:Background
     Dilate objects in the final averaged image?:No
     Dilation radius:1
@@ -178,8 +178,8 @@ CorrectIlluminationCalculate:[module_num:8|svn_version:'Unknown'|variable_revisi
     Residual value for convergence:0.001
 
 CorrectIlluminationCalculate:[module_num:9|svn_version:'Unknown'|variable_revision_number:2|show_window:False|notes:[]|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Select the input image:C5
-    Name the output image:IllumC5
+    Select the input image:Brightfield
+    Name the output image:IllumBF
     Select how the illumination function is calculated:Background
     Dilate objects in the final averaged image?:No
     Dilation radius:1
@@ -203,25 +203,25 @@ CorrectIlluminationCalculate:[module_num:9|svn_version:'Unknown'|variable_revisi
     Residual value for convergence:0.001
 
 CorrectIlluminationApply:[module_num:10|svn_version:'Unknown'|variable_revision_number:5|show_window:False|notes:['Apply illumination correction functions to all channels']|batch_state:array([], dtype=uint8)|enabled:True|wants_pause:False]
-    Select the input image:C1
+    Select the input image:ChromaLive_640
     Name the output image:CorrC1
-    Select the illumination function:IllumC1
+    Select the illumination function:IllumCL640
     Select how the illumination function is applied:Subtract
-    Select the input image:C2
+    Select the input image:ChromaLive_488
     Name the output image:CorrC2
-    Select the illumination function:IllumC2
+    Select the illumination function:IllumCL488
     Select how the illumination function is applied:Subtract
-    Select the input image:C3
+    Select the input image:SYTOX_Green
     Name the output image:CorrC3
-    Select the illumination function:C3
+    Select the illumination function:IllumSytoxG
     Select how the illumination function is applied:Subtract
-    Select the input image:C4
+    Select the input image:NucleoLive
     Name the output image:CorrC4
-    Select the illumination function:C4
+    Select the illumination function:IllumNL
     Select how the illumination function is applied:Subtract
-    Select the input image:C5
+    Select the input image:Brightfield
     Name the output image:CorrC5
-    Select the illumination function:C5
+    Select the illumination function:IllumBF
     Select how the illumination function is applied:Subtract
     Set output image values less than 0 equal to 0?:Yes
     Set output image values greater than 1 equal to 1?:Yes
@@ -230,7 +230,7 @@ SaveImages:[module_num:11|svn_version:'Unknown'|variable_revision_number:16|show
     Select the type of image to save:Image
     Select the image to save:CorrC1
     Select method for constructing file names:From image filename
-    Select image name for file prefix:C1
+    Select image name for file prefix:ChromaLive_640
     Enter single file name:OrigBlue
     Number of digits:4
     Append a suffix to the image file name?:Yes
@@ -250,7 +250,7 @@ SaveImages:[module_num:12|svn_version:'Unknown'|variable_revision_number:16|show
     Select the type of image to save:Image
     Select the image to save:CorrC2
     Select method for constructing file names:From image filename
-    Select image name for file prefix:C2
+    Select image name for file prefix:ChromaLive_488
     Enter single file name:OrigBlue
     Number of digits:4
     Append a suffix to the image file name?:Yes
@@ -270,7 +270,7 @@ SaveImages:[module_num:13|svn_version:'Unknown'|variable_revision_number:16|show
     Select the type of image to save:Image
     Select the image to save:CorrC3
     Select method for constructing file names:From image filename
-    Select image name for file prefix:C3
+    Select image name for file prefix:SYTOX_Green
     Enter single file name:OrigBlue
     Number of digits:4
     Append a suffix to the image file name?:Yes
@@ -290,7 +290,7 @@ SaveImages:[module_num:14|svn_version:'Unknown'|variable_revision_number:16|show
     Select the type of image to save:Image
     Select the image to save:CorrC4
     Select method for constructing file names:From image filename
-    Select image name for file prefix:C4
+    Select image name for file prefix:NucleoLive
     Enter single file name:OrigBlue
     Number of digits:4
     Append a suffix to the image file name?:Yes
@@ -310,7 +310,7 @@ SaveImages:[module_num:15|svn_version:'Unknown'|variable_revision_number:16|show
     Select the type of image to save:Image
     Select the image to save:CorrC5
     Select method for constructing file names:From image filename
-    Select image name for file prefix:C5
+    Select image name for file prefix:Brightfield
     Enter single file name:OrigBlue
     Number of digits:4
     Append a suffix to the image file name?:Yes

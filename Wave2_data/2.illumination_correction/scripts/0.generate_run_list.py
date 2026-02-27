@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
+# In[1]:
 
 
 import gc
@@ -25,14 +25,14 @@ else:
     import tqdm
 
 
-# In[7]:
+# In[2]:
 
 
 bandicoot_mount_path = pathlib.Path(os.path.expanduser("~/mnt/bandicoot/"))
 image_base_dir = bandicoot_check(bandicoot_mount_path, root_dir)
 
 
-# In[8]:
+# In[3]:
 
 
 # repository data directory to access the data faster
@@ -47,7 +47,7 @@ path_to_corrected_images = pathlib.Path(
 path_to_corrected_images.mkdir(exist_ok=True, parents=True)
 
 
-# In[ ]:
+# In[4]:
 
 
 # get a list of all well_fov dirs
@@ -68,7 +68,7 @@ list_of_files = [
 expected_files_df = pd.DataFrame({"file_path": list_of_files})
 
 
-# In[17]:
+# In[5]:
 
 
 expected_files_df["file_name"] = expected_files_df["file_path"].apply(lambda x: x.name)
@@ -84,6 +84,9 @@ expected_files_df["new_file_path"] = expected_files_df.apply(
 expected_files_df["well_fov"] = expected_files_df["file_parent"].apply(
     lambda x: pathlib.Path(x).name
 )
+expected_files_df["new_file_path_exists"] = expected_files_df["new_file_path"].apply(
+    lambda x: pathlib.Path(x).exists()
+)
 
 # get the well_fovs to run
 well_fovs_to_run = expected_files_df.loc[
@@ -93,7 +96,7 @@ print(f"Total number of files to process: {len(expected_files_df)}")
 print(f"Number of well_fovs to run: {len(well_fovs_to_run)}")
 
 
-# In[18]:
+# In[6]:
 
 
 # save the well_fovs to run to a tsv file

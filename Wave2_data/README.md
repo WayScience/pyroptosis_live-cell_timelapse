@@ -19,7 +19,7 @@ The images were acquired in 5 channels:
 | 1 | ChromaLIVE | 640 | 685/40 | ChromaLIVE | 50 |
 | 2 | ChromaLIVE | 488 | 685/40 | ChromaLIVE | 200 |
 | 3 | SYTOX Green | 488 | 525/50 | SYTOX Green | 50 |
-| 4 | Nuclei | 405 | 447/60 | Blue | 50 |
+| 4 | Nuclei | 405 | 447/60 | NulceoLive Blue | 50 |
 | 5 | Brightfield | | | | 50 |
 
 The wave 2 plate map can be viewed in the [Wave2_data/platemap_readme.md](./platemap_readme.md).

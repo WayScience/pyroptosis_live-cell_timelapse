@@ -1,7 +1,9 @@
 # Illumination Correction
 This module is used to perform illumination correction on all microscopy images.
-This is done by using BasicPy or Cellprofiler.
+This is done by using Cellprofiler.
 
-The illumination corrected images look much worse than the raw images.
-Thus, no IC will be performed on the wave 2 data.
-
+## Calling the Cellprofiler pipeline
+To run the Cellprofiler pipeline, we use the `cellprofiler` command in the terminal. The command is as follows:
+```
+bash run_ic_locally.sh
+```

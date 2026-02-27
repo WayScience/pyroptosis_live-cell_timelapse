@@ -20,8 +20,8 @@ dependencies:
 
 # Update to 4.2.0 to avoid libatk error
 - conda-forge::wxpython=4.2.0
-# - conda-forge::sentry-sdk=0.18.0
 - pip:
     - cellprofiler==4.2.6
     - jupyterlab==3.0.14
+    - natsort
 
