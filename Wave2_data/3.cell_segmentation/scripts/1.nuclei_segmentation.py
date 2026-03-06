@@ -35,7 +35,7 @@ else:
     import tqdm
 
 
-# In[ ]:
+# In[2]:
 
 
 if not in_notebook:
@@ -56,7 +56,7 @@ if not in_notebook:
 
     args = parser.parse_args()
     clip_limit = args.clip_limit
-    well_fov = pathlib.Path(args.well_fov).resolve(strict=True)
+    well_fov = args.well_fov
 
 
 else:
@@ -90,25 +90,10 @@ segmentation_mask_output_dir.mkdir(exist_ok=True, parents=True)
 figures_dir = pathlib.Path("../figures").resolve()
 figures_dir.mkdir(exist_ok=True, parents=True)
 
-if optimize_segmentation:
-    print("Optimizing Segmentation")
-elif not optimize_segmentation:
-    print("Running segmentation")
-
-
-# In[3]:
-
-
-# set up memory profiler for GPU
-device = torch.device("cuda:0")
-free_before, total_before = torch.cuda.mem_get_info(device)
-starting_level_GPU_RAM = (total_before - free_before) / 1024**2
-print("Starting level of GPU RAM available (MB): ", starting_level_GPU_RAM)
-
 
 # ## Set up images, paths and functions
 
-# In[4]:
+# In[3]:
 
 
 image_extensions = {".tif", ".tiff"}
@@ -117,7 +102,7 @@ files = [str(x) for x in files if x.suffix in image_extensions]
 files = natsort.natsorted(files)
 
 
-# In[5]:
+# In[4]:
 
 
 image_dict = {
@@ -126,7 +111,7 @@ image_dict = {
 }
 
 
-# In[6]:
+# In[5]:
 
 
 # split files by channel
@@ -143,7 +128,7 @@ nuclei = skimage.exposure.equalize_adapthist(nuclei, clip_limit=clip_limit)
 print(nuclei.shape)
 
 
-# In[7]:
+# In[6]:
 
 
 original_nuclei_image = nuclei.copy()
@@ -153,7 +138,7 @@ original_nuclei_image = nuclei.copy()
 
 # ### Runnning segmentation
 
-# In[8]:
+# In[7]:
 
 
 use_GPU = torch.cuda.is_available()
@@ -170,7 +155,6 @@ for img in tqdm.tqdm(nuclei, desc="Segmenting nuclei"):
 
     masks_all_dict["masks"].append(masks)
     masks_all_dict["imgs"].append(img)
-print(len(masks_all_dict))
 masks_all = masks_all_dict["masks"]
 imgs = masks_all_dict["imgs"]
 
@@ -178,7 +162,7 @@ masks_all = np.array(masks_all)
 imgs = np.array(imgs)
 
 
-# In[9]:
+# In[8]:
 
 
 for frame_index, frame in enumerate(image_dict["nuclei_file_paths"]):
@@ -186,7 +170,8 @@ for frame_index, frame in enumerate(image_dict["nuclei_file_paths"]):
     save_file_path = f"{segmentation_mask_output_dir}/{str(frame).split('/')[-1].split('_C4')[0]}_nuclei_mask.tiff"
     tifffile.imwrite(save_file_path, masks_all[frame_index, :, :])
 if in_notebook:
-    for z in range(len(masks_all)):
+    # show the first 5 and the last 5 masks
+    for z in [0, 1, 2, 3, 4, -5, -4, -3, -2, -1]:
         plt.figure(figsize=(20, 10))
 
         plt.title(f"z: {z}")
@@ -201,13 +186,3 @@ if in_notebook:
         plt.title("Cell masks")
         plt.axis("off")
         plt.show()
-
-
-# In[10]:
-
-
-# set up memory profiler for GPU
-device = torch.device("cuda:0")
-free_after, total_after = torch.cuda.mem_get_info(device)
-amount_used = ((total_after - free_after)) / 1024**2
-print(f"Used: {amount_used} MB or {amount_used / 1024} GB of GPU RAM")

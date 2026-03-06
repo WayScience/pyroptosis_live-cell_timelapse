@@ -53,21 +53,14 @@ if not in_notebook:
         type=float,
         help="Clip limit for the adaptive histogram equalization",
     )
-    parser.add_argument(
-        "--optimize_segmentation",
-        action="store_true",
-        help="Optimize the segmentation parameters",
-    )
 
     args = parser.parse_args()
     clip_limit = args.clip_limit
-    input_dir = args.well_fov
-    optimize_segmentation = args.optimize_segmentation
+    well_fov = args.well_fov
 
 else:
-    well_fov = "B2_2"
+    well_fov = "C2_1"
     clip_limit = 0.3
-    optimize_segmentation = True
 
 
 image_base_dir = bandicoot_check(
@@ -117,36 +110,53 @@ mask_image_files = natsort.natsorted(mask_image_files)
 input_dict = {
     "well_fov": [],
     "time_point": [],
-    "raw_image": [],
-    "nuclei_mask": [],
+    "raw_image_path": [],
+    "nuclei_mask_path": [],
 }
 
 input_dict["time_point"] = [
-    pathlib.Path(file).stem.split("_")[2] for file in raw_image_files if "C2" in file
+    pathlib.Path(file).stem.split("_")[2]
+    for file in raw_image_files
+    if "C2" in pathlib.Path(file).stem.split("_")[3]
 ]
-input_dict["raw_image"] = [
-    tifffile.imread(file) for file in raw_image_files if "C2" in file
+input_dict["raw_image_path"] = [
+    pathlib.Path(file)
+    for file in raw_image_files
+    if "C2" in pathlib.Path(file).stem.split("_")[3]
 ]
-input_dict["nuclei_mask"] = [
-    tifffile.imread(file) for file in mask_image_files if "nuclei_mask" in file
+input_dict["nuclei_mask_path"] = [
+    pathlib.Path(file) for file in mask_image_files if "nuclei_mask" in file
 ]
-input_dict["well_fov"] = [well_fov] * len(input_dict["nuclei_mask"])
+input_dict["well_fov"] = [well_fov] * len(input_dict["nuclei_mask_path"])
 
 
 # In[5]:
 
 
-for i, (well_fov, time_point, single_cyto_image, single_nuclei_mask) in tqdm.tqdm(
+for i, (
+    well_fov,
+    time_point,
+    single_cyto_image_path,
+    single_nuclei_mask_path,
+) in tqdm.tqdm(
     enumerate(
         zip(
             input_dict["well_fov"],
             input_dict["time_point"],
-            input_dict["raw_image"],
-            input_dict["nuclei_mask"],
+            input_dict["raw_image_path"],
+            input_dict["nuclei_mask_path"],
         )
     ),
     total=len(input_dict["well_fov"]),
 ):
+    output_path = (
+        segmentation_mask_output_dir / f"{well_fov}_{time_point}_cell_mask.tiff"
+    )
+    if output_path.exists():
+        continue
+
+    single_cyto_image = tifffile.imread(single_cyto_image_path)
+    single_nuclei_mask = tifffile.imread(single_nuclei_mask_path)
     # set the thresholds for multi-otsu segmentation
     thresholds = skimage.filters.threshold_multiotsu(
         image=single_cyto_image,
@@ -166,9 +176,6 @@ for i, (well_fov, time_point, single_cyto_image, single_nuclei_mask) in tqdm.tqd
     cell_mask = fill_labeled_holes(cell_mask, mask=cell_mask == 0)
 
     # Save the segmented mask as a tiff file
-    output_path = (
-        segmentation_mask_output_dir / f"{well_fov}_{time_point}_cell_mask.tiff"
-    )
     tifffile.imwrite(output_path, cell_mask.astype(np.uint16))
 
 

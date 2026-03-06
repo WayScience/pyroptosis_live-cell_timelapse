@@ -69,14 +69,13 @@ raw_images_present = {}
 nuclei_df_list = []
 cell_df_list = []
 
-image_extensions = {".tif", ".tiff"}
 raw_image_files = sorted(input_dir.glob("*"))
 for well_fov_name in tqdm.tqdm(
     well_fov_dirs, desc="Checking for raw images in input directory"
 ):
     well_fov_path = segmentation_mask_output_dir / well_fov_name
     if not well_fov_path.exists():
-        # add a fake entry with a placeholder file to trigger the reprocessing of this well_fov
+        # add a fake entry with a placeholder file to trigger the presence of this well_fov
         raw_images_present[well_fov_name] = {
             "nuclei": [pathlib.Path("placeholder_nuclei_file.tif")],
             "cell": [pathlib.Path("placeholder_cell_file.tif")],
@@ -84,6 +83,7 @@ for well_fov_name in tqdm.tqdm(
         continue
     nuclei_files = [
         f
+        # naturally sort the files to ensure consistent ordering
         for f in natsort.natsorted(well_fov_path.glob("*"))
         if f.suffix.lower() in image_extensions and "nuclei" in f.stem.lower()
     ]
@@ -134,8 +134,12 @@ if len(wells_to_rerun) == 0:
         "All well_fovs have the expected number of mask files. No reprocessing needed."
     )
 else:
+    if len(wells_to_rerun) < 5:
+        n = len(wells_to_rerun)
+    else:
+        n = 5
     print(
-        f"{len(wells_to_rerun)} well_fovs have less than the expected number of mask files and will be reprocessed. Here are the first 5: {wells_to_rerun[:5]}"
+        f"{len(wells_to_rerun)} well_fovs have less than the expected number of mask files and will be reprocessed. Here are the first {n}: {wells_to_rerun[:n]}"
     )
 
 
