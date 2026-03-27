@@ -1,0 +1,45 @@
+{
+    "data_config": {
+        "n_workers": 8,
+        "working_dir": ".",
+        "database": "sqlite",
+        "address": null,
+        "in_memory_db_id": 0
+    },
+    "segmentation_config": {
+        "min_area": 90,
+        "max_area": 10000,
+        "n_workers": 8,
+        "min_frontier": 0.0,
+        "threshold": 0.5,
+        "max_noise": 0.0,
+        "random_seed": "frame",
+        "ws_hierarchy": "area",
+        "anisotropy_penalization": 0.0
+    },
+    "linking_config": {
+        "max_distance": 79.99361751233998,
+        "n_workers": 12,
+        "max_neighbors": 8,
+        "distance_weight": -0.00044183344165836644,
+        "z_score_threshold": 3.5993570931065713
+    },
+    "tracking_config": {
+        "solver_name": "",
+        "appear_weight": -0.022694973233602627,
+        "disappear_weight": -0.03383547202025696,
+        "division_weight": 0.7361560740993487,
+        "image_border_size": null,
+        "n_threads": -1,
+        "window_size": 90,
+        "overlap_size": 8,
+        "solution_gap": 0.00030457896412926716,
+        "time_limit": 36000,
+        "method": 0,
+        "link_function": "power",
+        "power": 3.660458779170865,
+        "bias": -0.16670551494872524,
+        "dismiss_weight_guess": null,
+        "include_weight_guess": null
+    }
+}

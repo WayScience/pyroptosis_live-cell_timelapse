@@ -25,12 +25,12 @@ dependencies:
   - conda-forge::torchvision
   - conda-forge::cudatoolkit
   - conda-forge::cudnn
-  - conda-forge::tensorflow-gpu
-  - conda-forge::coincbc
+  - conda-forge::coincbc # alternative to gurobi for commercial use
   - conda-forge::pyarrow
+  - gurobi::gurobi # must be a University license no commercial use
   - pip:
     - torch
     - cellpose
-    - stardist[tf2]
     - tifffile
     - ultrack
+    - -e ../utils
