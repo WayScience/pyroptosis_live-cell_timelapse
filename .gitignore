@@ -179,3 +179,5 @@ Wave1_data/5.exploratory_data_analysis/scripts/Rplots.pdf
 Wave1_data/5.exploratory_data_analysis/data/*
 Wave1_data/5.exploratory_data_analysis/figures/first_time/timelapse_gifs/*
 Wave1_data/5.exploratory_data_analysis/figures/image_gifs/*
+Wave2_data/4.cell_tracking/scripts/*.db
+Wave2_data/4.cell_tracking/notebooks/*.db
