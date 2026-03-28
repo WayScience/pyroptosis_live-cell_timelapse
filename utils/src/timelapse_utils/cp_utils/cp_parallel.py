@@ -3,12 +3,14 @@ This collection of functions runs CellProfiler in parallel and can convert the r
 for each process.
 
 Developed from NF1 repository script made by Jenna Tomkinson.
+Slightly modified here to fit this project need.
 """
 
 import multiprocessing
 import pathlib
 import subprocess
 from concurrent.futures import Future, ProcessPoolExecutor
+from datetime import datetime
 from typing import List, Optional, Union
 
 
@@ -27,24 +29,38 @@ def results_to_log(
         run_name (str):
             a given name for the type of CellProfiler run being done on the plates (example: whole image features).
     """
-    # Access the command (args) and stderr (output) for each CompletedProcess object
-    for result in results:
-        # assign plate name and decode the CellProfiler output to use in log file
-        plate_name = result
-        output_string = result.stderr.decode("utf-8")
+    for idx, result in enumerate(results):
+        command_args = (
+            result.args if isinstance(result.args, list) else [str(result.args)]
+        )
 
-        # set log file name as plate name from command
-        log_file_path = pathlib.Path(f"{log_dir}/{plate_name}_{run_name}_run.log")
-        # print output to a log file for each plate to view after the run
-        # set up logging configuration
-        log_format = "[%(asctime)s] [Process ID: %(process)d] %(message)s"
-        # logging.basicConfig(
-        #     filename=log_file_path, level=logging.INFO, format=log_format
-        # )
+        plate_name = "unknown_plate"
+        if "-i" in command_args:
+            image_idx = command_args.index("-i") + 1
+            if image_idx < len(command_args):
+                plate_name = pathlib.Path(command_args[image_idx]).name
 
-        # # log plate name and output string
-        # logging.info(f"Plate Name: {plate_name}")
-        # logging.info(f"Output String: {output_string}")
+        stdout_string = (
+            result.stdout.decode("utf-8", errors="replace")
+            if isinstance(result.stdout, (bytes, bytearray))
+            else str(result.stdout)
+        )
+        stderr_string = (
+            result.stderr.decode("utf-8", errors="replace")
+            if isinstance(result.stderr, (bytes, bytearray))
+            else str(result.stderr)
+        )
+
+        log_file_path = pathlib.Path(log_dir) / f"{plate_name}_{run_name}_{idx}_run.log"
+        with open(log_file_path, "w", encoding="utf-8") as log_file:
+            log_file.write(
+                f"[{datetime.now().isoformat()}] [Return Code: {result.returncode}]\n"
+            )
+            log_file.write(f"Command: {' '.join(map(str, command_args))}\n\n")
+            log_file.write("--- STDOUT ---\n")
+            log_file.write(stdout_string if stdout_string else "<empty>\n")
+            log_file.write("\n--- STDERR ---\n")
+            log_file.write(stderr_string if stderr_string else "<empty>\n")
 
 
 def run_cellprofiler_parallel(
@@ -52,6 +68,7 @@ def run_cellprofiler_parallel(
     run_name: str,
     plugins_dir: Optional[Union[pathlib.Path, None]] = None,
     log_dir: Optional[pathlib.Path] = None,
+    max_workers: Optional[Union[int, None]] = 4,
 ) -> None:
     """
     This function utilizes multi-processing to run CellProfiler pipelines in parallel.
@@ -64,7 +81,11 @@ def run_cellprofiler_parallel(
         plugins_dir (pathlib.Path, optional):
             if you are using a CellProfiler plugin module in your pipeline, you must specify a path to the directory.
             This is an optional parameter and defaults to None (no plugin dir provided).
-
+        log_dir (pathlib.Path, optional):
+            directory for log files.
+        max_workers (int, optional):
+            maximum number of worker processes to use for parallel execution.
+            This is an optional parameter and defaults to 4.
     Raises:
         FileNotFoundError: if paths to pipeline and images do not exist
     """
@@ -122,13 +143,11 @@ def run_cellprofiler_parallel(
         # creates a list of commands
         commands.append(command)
 
-    # set the number of CPUs/workers as the number of commands
-    num_processes = len(commands)
-    print(f"Number of processes: {num_processes}")
-
-    # make sure that the number of workers does not exceed the maximum number of workers for the machine
-    if num_processes > multiprocessing.cpu_count():
-        num_processes = multiprocessing.cpu_count() - 2
+    if max_workers is None:
+        # make sure that the number of workers does not exceed the maximum number of workers for the machine
+        num_processes = max(1, multiprocessing.cpu_count() - 2)
+    else:
+        num_processes = max_workers
 
     # set parallelization executer to the number of commands
     executor = ProcessPoolExecutor(max_workers=num_processes)
@@ -148,12 +167,13 @@ def run_cellprofiler_parallel(
 
     print("All processes have been completed!")
 
-    # for each process, confirm that the process completed succesfully and return a log file
+    # convert results to log files
+    results_to_log(results=results, log_dir=log_dir, run_name=run_name)
+
+    # for each process, confirm that the process completed successfully
     for result in results:
-        # convert the results into log files
-        results_to_log(results=results, log_dir=log_dir, run_name=run_name)
         print(result.returncode)
-        if result.returncode == 1:
+        if result.returncode != 0:
             print(
                 f"A return code of {result.returncode} was returned for {result}, which means there was an error in the CellProfiler run."
             )
