@@ -66,7 +66,7 @@ load_file_dir = pathlib.Path(f"{root_dir}/Wave2_data/5.feature_extraction/loadfi
 
 
 # find all dirs in loadfiles path that contain the well_fov name (one per timepoint)
-timepoint_dirs = sorted(load_file_dir.glob(f"*/"))
+timepoint_dirs = sorted(load_file_dir.glob(f"*/"))[:1000]
 
 
 # ## Create dictionary with all info for each well

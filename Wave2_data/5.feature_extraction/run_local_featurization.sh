@@ -9,7 +9,7 @@ jupyter nbconvert --to script --output-dir=scripts/ notebooks/*.ipynb
 cd scripts/ || exit
 
 python generate_load_data.py
-python run_cellprofiler_analysis.py --max_workers 10
+python run_cellprofiler_analysis.py --max_workers 20
 
 conda deactivate
 
