@@ -46,3 +46,7 @@ This allows for each FOV to be processed independently.
 ### Image-based profiling
 
 ### Image-based profile processing
+
+
+Wave 1 data is deprecated and should not be used for analysis.
+All notebooks and code related to wave 1 data will not run.

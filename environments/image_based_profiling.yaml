@@ -1,0 +1,25 @@
+name: timelapse_ibp_env
+
+channels:
+- conda-forge
+- anaconda
+- pytorch
+
+dependencies:
+# this is restricted to Python 3.8 at this time due to other conflicts
+- conda-forge::python=3.12
+- conda-forge::ipykernel
+- conda-forge::nbconvert
+- conda-forge::pip
+- conda-forge::numpy>=2.0.0
+- conda-forge::pyyaml
+- conda-forge::matplotlib
+- conda-forge::seaborn
+- conda-forge::pandas
+- pip:
+    - cytotable
+    - pycytominer
+    - cosmicqc
+    - natsort
+    - pip in
+
