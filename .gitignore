@@ -182,4 +182,5 @@ Wave1_data/5.exploratory_data_analysis/figures/image_gifs/*
 Wave2_data/5.feature_extraction/loadfiles/*
 Wave2_data/5.feature_extraction/logs/*
 Wave2_data/5.feature_extraction/extracted_features/*
-Wave2_data/7.image_based_profiling/notebooks/cytotable_runinfo/*
+Wave2_data/6.image_based_profiling/notebooks/cytotable_runinfo/*
+Wave2_data/6.image_based_profiling/scripts/cytotable_runinfo/*
