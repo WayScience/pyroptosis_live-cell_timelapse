@@ -20,6 +20,7 @@ dependencies:
     - cytotable
     - pycytominer
     - cosmicqc
+    - tabulate
     - natsort
     - pip in
 
