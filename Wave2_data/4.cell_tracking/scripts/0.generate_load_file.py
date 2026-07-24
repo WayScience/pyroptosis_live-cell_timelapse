@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import argparse
@@ -24,7 +24,7 @@ else:
     import tqdm
 
 
-# In[ ]:
+# In[2]:
 
 
 if not in_notebook:
@@ -37,79 +37,49 @@ if not in_notebook:
     )
     plate_name = args.parse_args().plate_name
 else:
-    plate_name = "plate_1"
+    plate_name = "plate_2"
 
 
-# In[ ]:
+# In[3]:
 
 
 image_base_dir = bandicoot_check(
     root_dir=root_dir,
     bandicoot_mount_path=pathlib.Path(os.path.expanduser("~/mnt/bandicoot")).resolve(),
 )
-
-input_dir = pathlib.Path(
-    image_base_dir / "processed_data" / "1.illumination_corrected_files" / plate_name
-).resolve(strict=True)
-
-segmentation_mask_output_dir = pathlib.Path(
+segmentation_mask_dir = pathlib.Path(
     image_base_dir / "processed_data" / "2.cell_segmentation_masks" / plate_name
 ).resolve()
-
+cell_tracks_dir = pathlib.Path(
+    image_base_dir / "processed_data" / "3.cell_tracks" / plate_name
+).resolve()
 loadfile_dir = pathlib.Path("../loadfiles/loadfile.txt").resolve()
 loadfile_dir.parent.mkdir(parents=True, exist_ok=True)
 
 
 # ## Set up images, paths and functions
 
-# In[3]:
+# In[4]:
 
 
 image_extensions = {".tif", ".tiff"}
-raw_image_files = sorted(input_dir.glob("*"))
-well_fov_dirs = [x.name for x in raw_image_files if x.is_dir()]
-
-
-# In[ ]:
-
-
-raw_images_present = {}
-nuclei_df_list = []
-
-for well_fov_name in tqdm.tqdm(
-    well_fov_dirs, desc="Checking for raw images in input directory"
-):
-    well_fov_path = segmentation_mask_output_dir / well_fov_name
-    if not well_fov_path.exists():
-        # add a fake entry with a placeholder file to trigger the presence of this well_fov
-        raw_images_present[well_fov_name] = {
-            "nuclei": [pathlib.Path("placeholder_nuclei_file.tif")],
-            "cell": [pathlib.Path("placeholder_cell_file.tif")],
-        }
-        continue
-    nuclei_files = [
-        f
-        # naturally sort the files to ensure consistent ordering
-        for f in natsort.natsorted(well_fov_path.glob("*"))
-        if f.suffix.lower() in image_extensions and "nuclei" in f.stem.lower()
-    ]
-    nuclei_df_list.append(
-        pd.DataFrame(
-            {
-                "well_fov": well_fov_name,
-                "nuclei_files": [str(f) for f in nuclei_files],
-            }
-        )
-    )
-
-
-nuclei_df = pd.concat(nuclei_df_list, ignore_index=True)
+segmentation_mask_dirs = sorted(segmentation_mask_dir.glob("*"))
+well_fov_dirs = [x.name for x in segmentation_mask_dirs if x.is_dir()]
 
 
 # In[5]:
 
 
-wells_to_rerun = [x for x in nuclei_df["well_fov"].unique()]
+cell_tracks_to_run = []
+
+for well_fov_name in tqdm.tqdm(
+    well_fov_dirs, desc="Checking for raw images in input directory"
+):
+    well_fov_path = cell_tracks_dir / well_fov_name
+    if not well_fov_path.exists():
+        cell_tracks_to_run.append(well_fov_name)
+df = pd.DataFrame(cell_tracks_to_run, columns=["well_fov"])
+wells_to_rerun = [x for x in df["well_fov"].unique()]
 
 
 # In[6]:

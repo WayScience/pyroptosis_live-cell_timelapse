@@ -1,23 +1,36 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --time=30:00
+#SBATCH --ntasks=5
+#SBATCH --time=2:00:00
 #SBATCH --partition=aa100
-#SBATCH --gres=gpu:1
+#SBATCH --qos=gpu-normal
+#SBATCH --gres=gpu:a100-40gb:1
 #SBATCH --output=cell_tracking-%j.out
 
-module load miniforge
 module load cuda/11.8
-conda init bash
-conda activate cell_tracking_env
+module load uv
+git_root=$(git rev-parse --show-toplevel)
+
+if [ -d "/scratch/alpine" ]; then
+    echo "Using Alpine environment"
+    ENV_PATH="/projects/mlippincott@xsede.org/software/uv/envs/timelapse_live_cell_pyroptosis_uv_env/.venv"
+elif [ -d "/anvil" ]; then
+    ENV_PATH="/anvil/projects/x-bio260064/software/uv/envs/timelapse_live_cell_pyroptosis_uv_env/.venv"
+else
+    ENV_PATH="$git_root/.venv"
+fi
+
+PYTHON_BIN="$ENV_PATH/bin/python3"
+
+plate_name=$1
 
 
-jupyter nbconvert --to=script --FilesWriter.build_directory=scripts/ notebooks/*.ipynb
 
 cd scripts/ || exit
 
-well_fov=$1
-python 0.nuclei_tracking.py --well_fov "$well_fov"
+plate_name=$1
+well_fov=$2
+$PYTHON_BIN 1c.nuclei_tracking_HOCT.py --well_fov "$well_fov" --plate_name "$plate_name"
 
 cd ../ || exit
 

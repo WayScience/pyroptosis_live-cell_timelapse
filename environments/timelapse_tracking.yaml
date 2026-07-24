@@ -1,39 +1,36 @@
 name: timelapse_tracking_env
 
 channels:
-- conda-forge
-- defaults
+  - conda-forge
 
 dependencies:
-  - conda-forge::python=3.12
-  - conda-forge::ipykernel
-  - conda-forge::jupyter
-  - conda-forge::nbconvert
-  - conda-forge::nb_conda_kernels
-  - conda-forge::pip
-  - conda-forge::numpy<2.0
-  - conda-forge::matplotlib
-  - conda-forge::pandas
-  - conda-forge::scipy
-  - conda-forge::scikit-learn
-  - conda-forge::scikit-image
-  - conda-forge::pytorch
-  - conda-forge::torchvision
-  - conda-forge::cudatoolkit
-  - conda-forge::cudnn
-  - conda-forge::coincbc # alternative to gurobi for commercial use
-  - conda-forge::pyarrow
-
-  - conda-forge::napari
-  - gurobi::gurobi # must be a University license no commercial use
+  - python=3.12
+  - ipykernel
+  - jupyter
+  - nbconvert
+  - nb_conda_kernels
+  - pip
+  - numpy>2.0
+  - matplotlib
+  - seaborn
+  - pandas
+  - scipy
+  - scikit-learn
+  - scikit-image
+  - pytorch=*=*cuda*
+  - torchvision
+  - torchaudio
+  - cuda-version=12.4  # driver supports up to 13.0, but pin to the highest version conda-forge's pytorch build actually supports; verify with `conda search conda-forge::cuda-version` and `conda search conda-forge::pytorch`
+  - coincbc  # alternative to gurobi for commercial use
+  - pyarrow
+  - napari
+  - gurobi::gurobi  # must be a University license, no commercial use
   - pip:
-    - --extra-index-url https://download.pytorch.org/whl/cu121
-    - torch
-    - torchvision
-    - torchaudio
-    - tifffile
-    - ultrack
-    - optuna
-    - natsort
-    - gurobi
-    - -e ../utils
+      - bioio
+      - hoct[bioio]
+      - tifffile
+      - ultrack
+      - optuna
+      - natsort
+      - pynvml
+      - -e ../utils

@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import argparse
 import logging
 import os
 import pathlib
-import pprint
-import shutil
+import time
 
 # Configure logging FIRST, before any other imports
 logging.basicConfig(
@@ -23,8 +22,6 @@ logging.getLogger("ultrack.utils").setLevel(logging.ERROR)
 logging.getLogger("ultrack.utils.cuda").setLevel(logging.ERROR)
 logging.getLogger("ultrack.utils.edge").setLevel(logging.ERROR)
 
-import json
-
 import matplotlib.pyplot as plt
 import natsort
 import numpy as np
@@ -35,20 +32,6 @@ import tifffile
 import torch
 from PIL import Image
 from rich.pretty import pprint
-from ultrack import (
-    MainConfig,
-    link,
-    segment,
-    solve,
-    to_tracks_layer,
-    track,
-    tracks_to_zarr,
-)
-from ultrack.config import MainConfig
-from ultrack.imgproc import detect_foreground, robust_invert
-from ultrack.tracks import close_tracks_gaps
-from ultrack.utils import estimate_parameters_from_labels, labels_to_contours
-from ultrack.utils.array import array_apply, create_zarr
 
 os.environ["OMP_NUM_THREADS"] = "8"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -65,27 +48,32 @@ root_dir, in_notebook = init_notebook()
 if in_notebook:
     import tqdm.notebook as tqdm
 else:
+    import napari
     import tqdm
-
-
-# In[2]:
-
-
-def clear_gpu_memory():
-    """
-    A little function to clear gpu memory
-    """
-
-    torch.cuda.empty_cache()
-
-
-clear_gpu_memory()
 
 # begin time, CPU memory peak usage and GPU memory peak usage tracking
 import time
 import tracemalloc
 
+import napari
 import pynvml
+import torch
+import tracksdata as td
+from dask.array.image import imread
+from hoct import load_model, predict
+from hoct.features import normalize_image
+from hoct.tracking import ILPSolverConfig
+
+# def clear_gpu_memory():
+#     """
+#     A little function to clear gpu memory
+#     """
+
+#     torch.cuda.empty_cache()
+
+
+# clear_gpu_memory()
+
 
 pynvml.nvmlInit()
 
@@ -94,7 +82,13 @@ tracemalloc.start()
 handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # Assuming you want to track GPU 0
 
 
-# In[ ]:
+# In[2]:
+
+
+start_time = time.time()
+
+
+# In[3]:
 
 
 if not in_notebook:
@@ -130,7 +124,7 @@ else:
     print("Running in a notebook")
     well_fov = "B2_1"  # example well_fov
     generate_gif = False
-    plate_name = "plate_1"  # example plate name
+    plate_name = "plate_2"  # example plate name
 
 image_base_dir = bandicoot_check(
     root_dir=root_dir,
@@ -138,11 +132,7 @@ image_base_dir = bandicoot_check(
 )
 
 raw_image_input_dir = pathlib.Path(
-    image_base_dir
-    / "processed_data"
-    / "1.illumination_corrected_files"
-    / plate_name
-    / well_fov
+    image_base_dir / "processed_data" / "0.renamed_files" / plate_name / well_fov
 ).resolve(strict=True)
 
 segmentation_mask_input_dir = pathlib.Path(
@@ -153,18 +143,18 @@ segmentation_mask_input_dir = pathlib.Path(
     / well_fov
 ).resolve()
 
-config_output_path = "../results/ultrack_config.json"
-with open(config_output_path, "r") as f:
-    config_dict = json.load(f)
-config = MainConfig.parse_obj(config_dict)
+track_save_path = pathlib.Path(
+    image_base_dir / "processed_data" / "3.cell_tracks" / plate_name / well_fov
+).resolve()
+
 
 temporary_output_dir = pathlib.Path("../tmp_output").resolve()
 figures_output_dir = pathlib.Path("../figures").resolve()
 results_output_dir = pathlib.Path("../results").resolve()
-temporary_output_dir.mkdir(exist_ok=True)
-figures_output_dir.mkdir(exist_ok=True)
-results_output_dir.mkdir(exist_ok=True)
-pprint(config)
+track_save_path.mkdir(exist_ok=True, parents=True)
+temporary_output_dir.mkdir(exist_ok=True, parents=True)
+figures_output_dir.mkdir(exist_ok=True, parents=True)
+results_output_dir.mkdir(exist_ok=True, parents=True)
 
 
 # In[4]:
@@ -192,140 +182,106 @@ print(f"Found {len(mask_files)} segmentation mask files in the input directory")
 print(f"Found {len(nuclei_files)} nuclei files in the input directory")
 
 
-# In[ ]:
+# In[5]:
 
 
 # read in the masks and create labels
-masks = []
+labels = []
 for tiff_file in mask_files:
     img = tifffile.imread(tiff_file)
-    masks.append(img)
+    labels.append(img)
 
-masks = np.array(masks)
+labels = np.array(labels)
 
-nuclei = []
+images = []
 for tiff_file in nuclei_files:
     img = tifffile.imread(tiff_file)
-    nuclei.append(img)
-nuclei = np.array(nuclei)
+    images.append(img)
+images = np.array(images)
 
 
-# In[ ]:
+# In[6]:
 
 
-image_dims = nuclei[0].shape
+# Load the default pre-trained model (downloaded and cached on first use).
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = load_model(device=device)
+
+# optionally provide the ilp solver config, it could be None for default config
+solver_config = ILPSolverConfig(
+    appearance_weight=0.5,
+    delta_t_weight=0.5,
+    disappearance_weight=0.25,
+    division_weight=0.25,
+    edge_bias=0.5,
+    node_weight=-10.0,
+    tracklet_solver=True,
+)
+
+# Run tracking
+graph = predict(
+    model=model,
+    labels=labels,
+    images=images,
+    solver_config=solver_config,
+    distance_threshold=300.0,
+    n_neighbors=5,
+    max_delta_t=3,
+    # this is only required for large volumes where tiled prediction is needed
+    tiling_scheme=td.functional.TilingScheme(
+        tile_shape=(1, 32, 256, 256),
+        overlap_shape=(2, 16, 120, 120),
+    ),
+    test_time_augs=5,  # optional, takes longer but it improves performance
+)
 
 
 # In[7]:
 
 
-detections = np.zeros((len(masks), image_dims[0], image_dims[1]), dtype=np.uint16)
-edges = np.zeros((len(masks), image_dims[0], image_dims[1]), dtype=np.uint16)
-for frame_index, frame in tqdm.tqdm(
-    enumerate(masks), total=len(masks), desc="Processing frames"
-):
-    detections[frame_index, :, :], edges[frame_index, :, :] = labels_to_contours(frame)
-print(detections.shape, edges.shape)
-
-clear_gpu_memory()
+# Visualize
+tracks_df, track_graph, track_labels = td.functional.to_napari_format(
+    graph, mask_key="mask"
+)
 
 
 # In[8]:
 
 
-params_df = estimate_parameters_from_labels(masks, is_timelapse=True)
-if in_notebook:
-    params_df["area"].plot(kind="hist", bins=100, title="Nuclei Area histogram")
+# viewer = napari.Viewer()
+# viewer.add_image(images, name="images")
+# viewer.add_labels(track_labels, name="track_labels")
+# viewer.add_tracks(tracks_df, graph=track_graph, name="tracks")
+# viewer.add_labels(labels, name="labels")
+
+# napari.run()
 
 
 # In[9]:
 
 
-track(
-    foreground=detections,
-    edges=edges,
-    config=config,
-    overwrite=True,
-)
+# convert the DataFrame object to a pandas DataFrame and retain the column names
+tracks_df = pd.DataFrame(tracks_df, columns=tracks_df.columns)
+# save the tracks
+tracks_df.to_parquet(pathlib.Path(track_save_path / "cell_tracks.parquet"), index=False)
+tracks_df.head()
 
 
 # In[10]:
 
 
-tracks_df, graph = to_tracks_layer(config)
-tracks_df = close_tracks_gaps(
-    tracks_df=tracks_df,
-    max_gap=2,
-    max_radius=50,
-    spatial_columns=["y", "x"],
-)
-
-
-# In[11]:
-
-
-labels = tracks_to_zarr(config, tracks_df)
-# save the tracks as parquet
-tracks_df.to_parquet(
-    f"{results_output_dir}/{well_fov}_tracks.parquet",
-)
-print(tracks_df["track_id"].nunique())
-print(f"Found {tracks_df['track_id'].nunique()} unique tracks in the dataset.")
-tracks_df.head()
-
-
-# In[12]:
-
-
-if in_notebook:
-    # get the number of unique objects per frame and the unique tracks per frame
-    unique_objects_per_frame_dict = {
-        "frame": [],
-        "n_unique_objects": [],
-    }
-    for frame_number, frame_image in enumerate(masks):
-        unique_objects_per_frame_dict["frame"].append(frame_number)
-        unique_objects_per_frame_dict["n_unique_objects"].append(
-            np.unique(frame_image).size
-        )
-    unique_objects_per_frame_df = pd.DataFrame(unique_objects_per_frame_dict)
-
-    # plot the number of unique objects per frame and the unique tracks per frame
-    objects_per_frame = tracks_df.groupby("t")["track_id"].nunique()
-    plt.figure(figsize=(10, 6))
-    # plot the first line (unique objects per frame)
-    plt.plot(
-        unique_objects_per_frame_df["frame"],
-        unique_objects_per_frame_df["n_unique_objects"],
-        label="Unique Objects",
-    )
-    # plot the second line (unique tracks per frame)
-    plt.plot(objects_per_frame.index, objects_per_frame.values, label="Unique Tracks")
-    plt.title("Number of Unique Objects and Tracks per Frame")
-    plt.xlabel("Frame")
-    plt.ylabel("Number of Unique Items")
-    plt.legend()
-    plt.savefig(
-        f"{figures_output_dir}/{well_fov}_unique_objects_and_tracks_per_frame.png"
-    )
-    plt.show()
-
-
-# In[ ]:
-
-
 if generate_gif:
-    tracks_df.reset_index(drop=True, inplace=True)
+    # tracks_df.reset_index(drop=True, inplace=True)
     cum_tracks_df = tracks_df.copy()
     # zero out the track_df for plotting
     cum_tracks_df = cum_tracks_df.loc[cum_tracks_df["t"] == -1]
-    for frame_index, _ in enumerate(nuclei):
+    for frame_index, _ in enumerate(images):
         tmp_df = tracks_df.loc[tracks_df["t"] == frame_index]
         cum_tracks_df = pd.concat([cum_tracks_df, tmp_df])
         plt.figure(figsize=(6, 3))
         plt.subplot(121)
-        plt.imshow(detections[frame_index, :, :], cmap="prism")
-        plt.title("Detections")
+        plt.imshow(labels[frame_index, :, :], cmap="gray")
+        plt.title("Images")
         plt.axis("off")
 
         plt.subplot(122)
@@ -333,13 +289,13 @@ if generate_gif:
             data=cum_tracks_df,
             x="x",
             y="y",
-            hue="track_id",
+            hue="tracklet_id",
             legend=False,
             palette="Spectral",
             linewidth=0.8,
             alpha=0.8,
         )
-        plt.imshow(detections[frame_index, :, :], cmap="prism", alpha=0.3)
+        plt.imshow(labels[frame_index, :, :], cmap="gray", alpha=0.3)
         plt.title(f"Frame {frame_index}")
         plt.axis("off")
 
@@ -350,42 +306,23 @@ if generate_gif:
     files = [f for f in temporary_output_dir.glob("*.png")]
     files = sorted(files, key=lambda x: int(x.stem.split("_")[1]))
     frames = [Image.open(f) for f in files]
+    figures_output_dir = pathlib.Path("../figures")
+    figures_output_dir.mkdir(exist_ok=True)
     fig_path = figures_output_dir / f"{well_fov}_tracks.gif"
     # plot the line of each track in matplotlib over a gif
     # get the tracks
     # save the frames as a gif
     frames[0].save(
-        fig_path, save_all=True, append_images=frames[1:], duration=100, loop=0
+        fig_path, save_all=True, append_images=frames[1:], duration=750, loop=0
     )
 
 
-# In[14]:
-
-
-# clean up tracking files
-# remove temporary_output_dir
-shutil.rmtree(temporary_output_dir)
-
-track_db_path = pathlib.Path("data.db").resolve()
-metadata_toml_path = pathlib.Path("metadata.toml").resolve()
-if track_db_path.exists():
-    track_db_path.unlink()
-if metadata_toml_path.exists():
-    metadata_toml_path.unlink()
-
-
-# In[15]:
-
-
-clear_gpu_memory()
-
-
-# In[ ]:
+# In[11]:
 
 
 end_time = time.time()
-current, peak = tracemalloc.get_traced_memory()
-mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-print(f"Time taken for tracking: {end_time - start_time:.2f} seconds")
-print(f"Peak memory used: {peak / (1024**3):.2f} GB")
-print(f"GPU Memory used: {mem_info.used / (1024**3):.2f} GB")
+end_mem = tracemalloc.get_traced_memory()[1]
+end_gpu_mem = pynvml.nvmlDeviceGetMemoryInfo(handle).used
+print(f"Total time: {end_time - start_time:.2f} seconds")
+print(f"Peak CPU memory usage: {end_mem / 1024 / 1024:.2f} MB")
+print(f"Peak GPU memory usage: {end_gpu_mem / 1024 / 1024:.2f} MB")
